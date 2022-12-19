@@ -2,6 +2,7 @@ from wafer.logger import lg
 from dataclasses import dataclass
 import os
 from wafer.components.data_validation import DataValidation
+from wafer.components.data_ingestion import DataIngestion
 
 
 @dataclass
@@ -16,19 +17,18 @@ class TrainingPipeline:
             validation_artifact = data_validation.initiate()
 
             ######################### DATA INGESTION #######################################
-
+            data_ingestion = DataIngestion(
+                data_validation_artifact=validation_artifact, new_data=False)
+            ingestion_artifact = data_ingestion.initiate()
 
             ######################### DATA TRANSFORMATION ##################################
-            
 
             ######################### MODEL TRAINING #######################################
-            
 
             ######################### MODEL EVALUATION #####################################
-            
 
             ######################### MODEL PUSHING ########################################
-            
+
             ...
         except Exception as e:
             lg.exception(e)

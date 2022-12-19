@@ -7,6 +7,7 @@ from dataclasses import dataclass
 RAW_DATA_DIR = "training_batch_files"
 TRAINING_SCHEMA = "schema_training.json"
 PREDICTION_SCHEMA = "schema_prediction.json"
+FEATURE_STORE_FILE = "wafers.csv"
 
 
 @dataclass
@@ -37,11 +38,30 @@ class DataValidationConfig:
         try:
             training_artifacts_config = TrainingArtifactsConfig()
 
-            self.data_validation_dir = os.path.join(training_artifacts_config.artifacts_dir, "data_validation")
-            
-            self.good_data_dir = os.path.join(self.data_validation_dir, "good_raw_data")
-            self.bad_data_dir = os.path.join(self.data_validation_dir, "bad_raw_data")
-            self.archived_data_dir = os.path.join(self.data_validation_dir, "archived_data")
+            self.data_validation_dir = os.path.join(
+                training_artifacts_config.artifacts_dir, "data_validation")
+
+            self.good_data_dir = os.path.join(
+                self.data_validation_dir, "good_raw_data")
+            self.bad_data_dir = os.path.join(
+                self.data_validation_dir, "bad_raw_data")
+            self.archived_data_dir = os.path.join(
+                self.data_validation_dir, "archived_data")
+            ...
+        except Exception as e:
+            lg.exception(e)
+
+
+class DataIngestionConfig:
+    def __init__(self):
+        try:
+            training_artifacts_config = TrainingArtifactsConfig()
+
+            self.data_ingestion_dir = os.path.join(
+                training_artifacts_config.artifacts_dir, "data_ingestion")
+
+            self.feature_store_file_path = os.path.join(
+                self.data_ingestion_dir, FEATURE_STORE_FILE)
             ...
         except Exception as e:
             lg.exception(e)

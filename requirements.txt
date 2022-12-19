@@ -1,4 +1,6 @@
 pandas
 numpy
+pymongo
+python-dotenv
 wincertstore==0.2
 -e .
