@@ -100,6 +100,8 @@ class DataValidation:
             for csv_file in os.listdir(self.good_data_dir):
                 # reading each csv file as pandas dataframe
                 df = pd.read_csv(os.path.join(self.good_data_dir, csv_file))
+                # rename the feature "Unnamed : 0" to "Wafer" of GoodRawData file
+                df.rename(columns={"Unnamed: 0": "Wafer"}, inplace=True)
                 current_cols_names = list(df.columns).sort()
                 if current_cols_names != expected_names_of_columns.sort():
                     lg.warning(
