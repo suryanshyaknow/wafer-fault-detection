@@ -10,3 +10,5 @@ class DataValidationArtifact:
 @dataclass
 class DataIngestionArtifact:
     feature_store_file_path: str
+    training_file_path: str
+    test_file_path: str

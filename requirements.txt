@@ -2,5 +2,6 @@ pandas
 numpy
 pymongo
 python-dotenv
+scikit-learn
 wincertstore==0.2
 -e .

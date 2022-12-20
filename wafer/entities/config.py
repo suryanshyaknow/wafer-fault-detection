@@ -8,6 +8,8 @@ RAW_DATA_DIR = "training_batch_files"
 TRAINING_SCHEMA = "schema_training.json"
 PREDICTION_SCHEMA = "schema_prediction.json"
 FEATURE_STORE_FILE = "wafers.csv"
+TRAINING_FILE = "training_set.csv"
+TEST_FILE = "test_set.csv"
 
 
 @dataclass
@@ -62,6 +64,10 @@ class DataIngestionConfig:
 
             self.feature_store_file_path = os.path.join(
                 self.data_ingestion_dir, FEATURE_STORE_FILE)
+            self.training_file_path = os.path.join(self.data_ingestion_dir, TRAINING_FILE)
+            self.test_file_path = os.path.join(self.data_ingestion_dir, TEST_FILE)
+            self.test_size = .20
+            self.random_state = 42            
             ...
         except Exception as e:
             lg.exception(e)

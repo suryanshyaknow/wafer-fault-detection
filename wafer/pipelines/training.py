@@ -1,6 +1,7 @@
 from wafer.logger import lg
 from dataclasses import dataclass
 import os
+import argparse
 from wafer.components.data_validation import DataValidation
 from wafer.components.data_ingestion import DataIngestion
 
@@ -10,6 +11,8 @@ class TrainingPipeline:
     lg.info("Training Pipeline begins now..")
     lg.info(f"Entered the {os.path.basename(__file__)[:-3]}.TrainingPipeline")
 
+    new_data: bool = False
+
     def begin(self):
         try:
             ######################### DATA VALIDATION ######################################
@@ -18,7 +21,7 @@ class TrainingPipeline:
 
             ######################### DATA INGESTION #######################################
             data_ingestion = DataIngestion(
-                data_validation_artifact=validation_artifact, new_data=False)
+                data_validation_artifact=validation_artifact, new_data=self.new_data)
             ingestion_artifact = data_ingestion.initiate()
 
             ######################### DATA TRANSFORMATION ##################################
@@ -37,5 +40,8 @@ class TrainingPipeline:
 
 
 if __name__ == "__main__":
-    training_pipeline = TrainingPipeline()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--new_data", default=False)
+    parsed_args = parser.parse_args()
+    training_pipeline = TrainingPipeline(new_data=parsed_args.new_data)
     training_pipeline.begin()

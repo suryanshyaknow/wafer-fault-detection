@@ -55,7 +55,7 @@ class MongoDBOperations:
                 lg.info(
                     f"collection found! selecting the collection {self.collection}..")
                 self.collection = self.database[self.collection_name]
-                lg.info("..said collection selected successfully")
+                lg.info("..said collection selected successfully!")
             else:
                 lg.warning(
                     f"collection \"{self.collection_name}\" not found in the database, gotta create it..")
