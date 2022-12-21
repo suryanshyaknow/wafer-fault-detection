@@ -11,5 +11,5 @@ class DatabaseConfig:
     """
     load_dotenv()
     mongodb_url: str = os.getenv("MONGO_DB_URL")
-    database_name: str = "wafers-batch-data"
-    collection_name: str = "wafers"
+    database_name: str = "wafers"
+    collection_name: str = "training-batch"
