@@ -12,3 +12,25 @@ class DataIngestionArtifact:
     feature_store_file_path: str
     training_file_path: str
     test_file_path: str
+
+
+@dataclass
+class DataPreparationArtifact:
+    preprocessor_path: str
+    transformed_training_file_path: str
+    transformed_test_file_path: str
+
+
+@dataclass
+class ModelTrainingArtifact:
+    ...
+
+
+@dataclass
+class ModelEvaluationArtifact:
+    ...
+
+
+@dataclass
+class ModelPushingArtifact:
+    ...

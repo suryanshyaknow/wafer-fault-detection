@@ -4,6 +4,7 @@ import os
 import argparse
 from wafer.components.data_validation import DataValidation
 from wafer.components.data_ingestion import DataIngestion
+from wafer.components.data_preparation import DataPreparation
 
 
 @dataclass
@@ -25,6 +26,9 @@ class TrainingPipeline:
             ingestion_artifact = data_ingestion.initiate()
 
             ######################### DATA TRANSFORMATION ##################################
+            data_prep = DataPreparation(
+                data_ingestion_artifact=ingestion_artifact)
+            data_prep_artifact = data_prep.initiate()
 
             ######################### MODEL TRAINING #######################################
 
