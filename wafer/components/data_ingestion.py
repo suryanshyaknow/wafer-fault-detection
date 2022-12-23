@@ -12,6 +12,12 @@ from dataclasses import dataclass
 
 @dataclass
 class DataIngestion:
+    """Shall be used for ingesting the validated data from `Good Raw Data` dir into MongoDB and even extract and return the 
+    consequent feature store file once the ingestion's been done.
+
+    Args:
+        new_data (bool): Whether there's any new data for dumping into the desired realational dB. Defaults to False.
+    """
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.DataIngestion" class')
 
@@ -21,6 +27,15 @@ class DataIngestion:
     data_ingestion_config = DataIngestionConfig()
 
     def initiate(self) -> DataIngestionArtifact:
+        """Initiates the Data Ingestion stage of the training pipeline.
+
+        Raises:
+            e: Raises exception should any pops up while ingestion of data or extraction of same after ingestion.
+
+        Returns:
+            DataIngestionArtifact: Contains configurations of all relevant artifacts that shall be made during 
+            the Data Ingestion stage.
+        """
         try:
             lg.info(f"\n{'='*27} DATA INGESTION {'='*40}")
 
@@ -103,3 +118,4 @@ class DataIngestion:
             ...
         except Exception as e:
             lg.exception(e)
+            raise e

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 @dataclass
 class DataPreparation:
+    """Shall be used for preparing the training and test data before feeding them into ML algorithms."""
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.DataTransformation" class')
 
@@ -26,6 +27,9 @@ class DataPreparation:
         """Returns a `Custom Pipeline` for numerical attributes of the said dataset. Pipeline contains 
         `KNNImputer` and `RobustScaler` to transform the features of the very same dataset.
 
+        Raises:
+            e: Throws exception if any error pops up while building or returning the preprocessor.
+
         Returns:
             Pipeline: Custom Pipeline for the numerical features of the said dataset. 
         """
@@ -33,24 +37,46 @@ class DataPreparation:
             ########################## Pipeline for Numerical Atts ############################################
             preprocessing_pipeline = Pipeline(
                 steps=[('KNN IMputer', KNNImputer(n_neighbors=3)),
-                        ('Robust Scaler', RobustScaler())])
+                       ('Robust Scaler', RobustScaler())])
 
             return preprocessing_pipeline
             ...
         except Exception as e:
             lg.info(e)
+            raise e
 
     @classmethod
-    def get_resampler(cls) -> SMOTETomek:
+    def get_resampler(cls, sampling_strategy: str = "auto") -> SMOTETomek:
+        """Returns the SMOTETomek resampling object for resampling data instances if data's imbalanced. 
+
+        Args:
+            sampling_strategy (str, optional): Sampling strategy for resampling the data instances at hand. Defaults to "auto".
+
+        Raises:
+            e: Throws exception if any error pops up while building or returning SMOTETomek resampling object.
+
+        Returns:
+            SMOTETomek: SMOTETomek resampling object.
+        """
         try:
             smote_resampler = SMOTETomek(
-                sampling_strategy='auto')  # not majority
+                sampling_strategy=sampling_strategy)
             return smote_resampler
             ...
         except Exception as e:
             lg.exception(e)
+            raise e
 
     def initiate(self) -> DataPreparationArtifact:
+        """Initiates the Data Preparation stage of the training pipeline.
+
+        Raises:
+            e: Raises exception ahould any pops up while preparing data.
+
+        Returns:
+            DataPreparationArtifact: Contains configurations of all the relevant artifacts that shall be made while
+            preparing the data.
+        """
         try:
             lg.info(f"\n{'='*27} DATA PREPARATION {'='*40}")
 

@@ -8,6 +8,13 @@ from dataclasses import dataclass
 
 @dataclass
 class MongoDBOperations:
+    """This class is exclusively for performing all MongoDB pertaining operations.
+    
+    Args:
+        connection_string (str): Takes in the `client url` to establish connection to MongoDB.
+        database_name (str): Database to which connection is to be established.
+        collection_name (str): Desired collection name of the said database. 
+    """
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.dBOperations" class')
 
@@ -20,17 +27,24 @@ class MongoDBOperations:
 
     def establishConnectionToMongoDB(self):
         """This method establishes the connection to the desired MongoDB Cluster.
+
+        Raises:
+            e: Throws exception if any error pops up while establishing connection to MongoDB.
         """
         try:
             lg.info("establishing the connection to MongoDB..")
             self.client = pymongo.MongoClient(self.connection_string)
         except Exception as e:
             lg.exception(e)
+            raise e
         else:
             lg.info("connection established successfully!")
 
     def selectDB(self):
         """This method chooses the desired dB from the MongoDB Cluster.
+
+        Raises:
+            e: Throws exception if any error pops up while selecting desired database from MongoDB.
         """
         try:
             self.establishConnectionToMongoDB()
@@ -38,12 +52,17 @@ class MongoDBOperations:
             self.database = self.client[self.database_name]
         except Exception as e:
             lg.exception(e)
+            raise e
         else:
             lg.info(
                 f'"{self.database_name}" database chosen succesfully!')
 
     def createOrselectCollection(self):
         """This method shall create the desired collection in the selected database of the MongoDB Cluster.
+
+        Raises:
+            e: Throws exception if any error pops up while creating or selecting any desired collection in selected
+            database of MongoDB.
         """
         try:
             self.selectDB()
@@ -65,9 +84,13 @@ class MongoDBOperations:
                 lg.info("..said collection created successfully!")
         except Exception as e:
             lg.exception(e)
+            raise e
 
     def dumpData(self, records: List, data_desc: str):
         """Dumps the desired bulk data (to be parameterized in a form of list) to the
+
+        Raises:
+            e: Throws exception if any error pops up while dumping data into selected database of MongoDB.
 
         Args:
             records (List): The bulk data that's to be dumped into the collection (in a form of List).
@@ -82,14 +105,18 @@ class MongoDBOperations:
             ...
         except Exception as e:
             lg.exception(e)
+            raise e
         else:
             lg.info(f"dumped {data_desc} with success!")
 
     def getDataAsDataFrame(self) -> pd.DataFrame:
         """This method prepares a feature-store-file out of all the data from the selecetd database.
 
+        Raises:
+            e: Throws exception if any error pops up while loading data as dataframe from MongoDB's database.
+
         Returns:
-            pandas.DataFrame: Feature-store-file as pandas dataframe.
+            pandas.DataFrame: Data from the given collection of the MongoDB database in form of pandas dataframe.
         """
         try:
             self.createOrselectCollection()
@@ -100,6 +127,7 @@ class MongoDBOperations:
             df.drop(columns=["_id"], inplace=True)
         except Exception as e:
             lg.exception(e)
+            raise e
         else:
             lg.info("returning the database..")
             return df

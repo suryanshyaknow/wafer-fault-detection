@@ -12,6 +12,11 @@ from dataclasses import dataclass
 
 @dataclass
 class DataValidation:
+    """Gotta be used for validating the data before dumping it all into the desired database. First and foremost,
+    the data shall be validated on basis of their file names followed by validation of raw data based on multiple
+    constraints. In each stage, if the data is validated, the file will be moved to `Good Raw Data` dir and in the 
+    `Bad Raw Data` dir for the other way around. At last, all the bad data will be sent over to `Archived Data` dir. 
+    """
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.DataValidation" class')
 
@@ -29,6 +34,9 @@ class DataValidation:
         Args:
             expected_length_of_date_stamp (int): Expected length of datestamp in the file name in regard to MDM.
             expected_length_of_time_stamp (int): Expected length of timestamp in the file name in regard to MDM.
+
+        Raises:
+            e: Throws exception if any error pops up while validating raw files.
         """
         try:
             ############################ Configure Good/Bad Raw Data dirs #######################################
@@ -69,6 +77,7 @@ class DataValidation:
             ...
         except Exception as e:
             lg.exception(e)
+            raise e
 
     def validate_raw_data(self, expected_number_of_columns: int, expected_names_of_columns: List) -> None:
         """Validates raw data in the raw training files by performing checks for expected number of columns and
@@ -77,6 +86,9 @@ class DataValidation:
 
         Args:
             expected_number_of_columns (int): Expected number of columns for validating a file.
+
+        Raises:
+            e: Throws exception if any error pops up while validating raw data.
         """
         try:
             ############################# Validate Number of Columns ############################################
@@ -91,7 +103,8 @@ class DataValidation:
                     shutil.move(os.path.join(self.good_data_dir,
                                 csv_file), self.bad_data_dir)
                 else:
-                    lg.info(f'"{csv_file}" validated, staying in `Good Raw Data` dir..')
+                    lg.info(
+                        f'"{csv_file}" validated, staying in `Good Raw Data` dir..')
             lg.info("Check for expected number of columns completed with success!")
 
             ############################# Validate Columns' Names ###############################################
@@ -109,7 +122,8 @@ class DataValidation:
                     shutil.move(os.path.join(self.good_data_dir,
                                 csv_file), self.bad_data_dir)
                 else:
-                    lg.info(f'"{csv_file}" validated, staying in `Good Raw Data` dir..')
+                    lg.info(
+                        f'"{csv_file}" validated, staying in `Good Raw Data` dir..')
             lg.info("Check for expected names of columns completed with success!")
 
             #################### See whether any Columns have all entries missing ###############################
@@ -131,12 +145,16 @@ class DataValidation:
             ...
         except Exception as e:
             lg.exception(e)
+            raise e
 
     def initiate(self) -> DataValidationArtifact:
         """Initiates the Data Validation stage by performing relevant checks.
 
+        Raises:
+            e: Throws exception if any error pops up while in the Data Validation process. 
+
         Returns:
-            DataValidationArtifact: Consists of `GoodRawData`'s and `ArchivedData`'s dirs configs.
+            DataValidationArtifact: Contains `Good Raw Data` and `Archived Data` dirs configurations.
         """
         try:
             lg.info(f"\n{'='*27} DATA VALIDATION {'='*40}")
@@ -199,3 +217,4 @@ class DataValidation:
             ...
         except Exception as e:
             lg.exception(e)
+            raise e
