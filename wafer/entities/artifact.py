@@ -17,13 +17,14 @@ class DataIngestionArtifact:
 @dataclass
 class DataPreparationArtifact:
     preprocessor_path: str
+    clusterer_path: str
     transformed_training_file_path: str
     transformed_test_file_path: str
 
 
 @dataclass
 class ModelTrainingArtifact:
-    ...
+    cluster_based_models_dir: str
 
 
 @dataclass

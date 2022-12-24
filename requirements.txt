@@ -1,4 +1,6 @@
 imbalanced-learn
+kneed
+matplotlib
 pandas
 numpy
 pymongo

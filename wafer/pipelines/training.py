@@ -4,7 +4,7 @@ import os
 import argparse
 from wafer.components.data_validation import DataValidation
 from wafer.components.data_ingestion import DataIngestion
-from wafer.components.data_preparation import DataPreparation
+from wafer.components.data_preparation.data_preparation import DataPreparation
 
 
 @dataclass

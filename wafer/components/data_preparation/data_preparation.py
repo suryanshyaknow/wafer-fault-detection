@@ -8,6 +8,7 @@ from wafer.entities.artifact import DataIngestionArtifact, DataPreparationArtifa
 from sklearn.pipeline import Pipeline
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import RobustScaler
+from wafer.components.data_preparation.clustering import ClusterDataInstances
 from imblearn.combine import SMOTETomek
 from dataclasses import dataclass
 
@@ -119,12 +120,28 @@ class DataPreparation:
             X_test_transformed = preprocessor.transform(X_test)
             lg.info("..test set transformed successfully!")
 
-            ############################### Save the Preprocessor Artifact #####################################
-            # Saving the preprocessor
+            # Saving the Preprocessor
             BasicUtils.save_object(
                 file_path=self.data_prep_config.preprocessor_path,
                 obj=preprocessor,
                 obj_desc="preprocessor")
+
+            ########################### Clustering of Data Instances ############################################
+            cluster_train_data = ClusterDataInstances(
+                X=X_train_transformed, desc="training", data_prep_config=self.data_prep_config)
+            clusterer, X_train_clus = cluster_train_data.create_clusters()
+
+            # Cluster Test instances
+            lg.info("Clustering the test instances..")
+            y_kmeans_test = clusterer.predict(X_test_transformed)
+            X_test_clus = np.c_[X_test_transformed, y_kmeans_test]
+            lg.info("..got test instances clustererd successfully!")
+
+            # Save the Clusterer
+            lg.info("saving the Clusterer..")
+            BasicUtils.save_object(
+                file_path=self.data_prep_config.clusterer_path, obj=clusterer, obj_desc="KMeans Clusterer")
+            lg.info("..said Clusterer saved successfully!")
 
             ########################### Resampling of Training Data Instances ##################################
             # fetch the SMOTE Resampler
@@ -138,7 +155,7 @@ class DataPreparation:
             lg.info('Resampling via SMOTETomek using sampling_strategy="auto"..')
             # Resample the training instances (as they are heavily imbalanced)
             X_train_res, y_train_res = resampler.fit_resample(
-                X_train_transformed, y_train)
+                X_train_clus, y_train)
             lg.info("resampling of training instances done successfully!")
 
             ######################### Configure Training and Test arrays #######################################
@@ -147,7 +164,7 @@ class DataPreparation:
             lg.info(
                 f"After Resampling, shape of the `training set`: {training_arr.shape}")
             # Test Array
-            test_arr = np.c_[X_test_transformed, y_test]
+            test_arr = np.c_[X_test_clus, y_test]
 
             ########################### Save Training and Test arrays ##########################################
             # Saving the Training Array
@@ -166,6 +183,7 @@ class DataPreparation:
             ########################## Prepare the Data Preparation Artifact ###################################
             data_prep_artifact = DataPreparationArtifact(
                 preprocessor_path=self.data_prep_config.preprocessor_path,
+                clusterer_path=self.data_prep_config.clusterer_path,
                 transformed_training_file_path=self.data_prep_config.transformed_training_file_path,
                 transformed_test_file_path=self.data_prep_config.transformed_test_file_path
             )
