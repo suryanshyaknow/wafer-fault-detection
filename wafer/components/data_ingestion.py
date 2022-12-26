@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 @dataclass
 class DataIngestion:
-    """Shall be used for ingesting the validated data from `Good Raw Data` dir into MongoDB and even extract and return the 
+    """Shall be used for ingesting the validated data from `Good Raw Data` dir into MongoDB and even extract and readies the 
     consequent feature store file once the ingestion's been done.
 
     Args:
@@ -85,32 +85,9 @@ class DataIngestion:
                 self.data_ingestion_config.feature_store_file_path, index=None)
             lg.info("..prepared `feature store file` successfully!")
 
-            ########################## Training-Test Split #####################################################
-            lg.info(
-                'splitting the `feature store data` into training and test subsets..')
-            training_set, test_set = train_test_split(
-                feature_store_file, test_size=self.data_ingestion_config.test_size, random_state=self.data_ingestion_config.random_state)
-            lg.info("..data split into test and training subsets successfully!")
-            # Making sure the test and training dirs do exist
-            test_dir = os.path.dirname(
-                self.data_ingestion_config.test_file_path)
-            training_dir = os.path.dirname(
-                self.data_ingestion_config.training_file_path)
-            os.makedirs(test_dir, exist_ok=True)
-            os.makedirs(training_dir, exist_ok=True)
-            # Saving the test and train set to their respective dirs
-            lg.info("saving the test and training subsets to their respective dirs..")
-            test_set.to_csv(
-                path_or_buf=self.data_ingestion_config.test_file_path, index=None)
-            training_set.to_csv(
-                path_or_buf=self.data_ingestion_config.training_file_path, index=None)
-            lg.info("..test and training subsets saved succesfully!")
-
             ########################### Prepare the Data Ingestion Artifact ####################################
             data_ingestion_artifact = DataIngestionArtifact(
-                feature_store_file_path=self.data_ingestion_config.feature_store_file_path,
-                training_file_path=self.data_ingestion_config.training_file_path,
-                test_file_path=self.data_ingestion_config.test_file_path)
+                feature_store_file_path=self.data_ingestion_config.feature_store_file_path)
             lg.info(f"Data Ingestion Artifact: {data_ingestion_artifact}")
             lg.info("DATA INGESTION completed!")
 

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 @dataclass
 class DataPreparation:
-    """Shall be used for preparing the training and test data before feeding them into ML algorithms."""
+    """Shall be used for preparing the data, before feeding into ML algorithms for training."""
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.DataTransformation" class')
 
@@ -72,7 +72,7 @@ class DataPreparation:
         """Initiates the Data Preparation stage of the training pipeline.
 
         Raises:
-            e: Raises exception ahould any pops up while preparing data.
+            e: Raises exception should any pops up while preparing the data.
 
         Returns:
             DataPreparationArtifact: Contains configurations of all the relevant artifacts that shall be made while
@@ -81,44 +81,34 @@ class DataPreparation:
         try:
             lg.info(f"\n{'='*27} DATA PREPARATION {'='*40}")
 
-            ########################### Fetch the Training and Test datasets ###################################
-            lg.info("fetching the training and test sets for transformation..")
-            training_set = pd.read_csv(
-                self.data_ingestion_artifact.training_file_path)
-            test_set = pd.read_csv(self.data_ingestion_artifact.test_file_path)
-            lg.info("training and test sets fetched successfully!")
+            ########################### Fetch the `Feature Store` dataset #######################################
+            lg.info("fetching the feature store dataset for preparation..")
+            wafers = pd.read_csv(
+                self.data_ingestion_artifact.feature_store_file_path)
+            lg.info("..said dataset fetched successfully!")
 
             ################################ Drop Redundant Features ###########################################
             # fetch `Wafer` feature and features with "0 Standard Deviation" as in to drop them
             cols_to_drop = ["Wafer"]
             cols_with_zero_std = BasicUtils.get_columns_with_zero_std_dev(
-                df=training_set, desc="training")
+                df=wafers, desc="feature store")
             cols_to_drop = cols_to_drop + cols_with_zero_std
             # drop fetched features form training set
-            training_set = BasicUtils.drop_columns(
-                training_set, cols_to_drop=cols_to_drop, desc="training")
-            # drop fetched features form test set
-            test_set = BasicUtils.drop_columns(
-                test_set, cols_to_drop=cols_to_drop, desc="test")
+            wafers = BasicUtils.drop_columns(
+                wafers, cols_to_drop=cols_to_drop, desc="feature store")
 
-            ################ Separate the Features and Labels out from the Training and Test sets ##############
-            X_train, y_train = BasicUtils.get_features_and_labels(
-                df=training_set, target=[self.target], desc="training")
-            X_test, y_test = BasicUtils.get_features_and_labels(
-                df=test_set, target=[self.target], desc="test")
+            ########################## Separate the Features and Labels out ####################################
+            X, y = BasicUtils.get_features_and_labels(
+                df=wafers, target=[self.target], desc="feature store")
 
             ######################## Transformation: Imputation + Scaling ######################################
             # fetch the transformer and fit to the training features
             lg.info("fetching the preprocessor (Imputer + Scaler)..")
             preprocessor = DataPreparation.get_preprocessor()
             lg.info("..preprocessor fetched successfully!")
-            X_train_transformed = preprocessor.fit_transform(X_train)
-            lg.info("..training set transformed successfully!")
-
-            # transform the test features
-            lg.info("transforming the test set accordingly..")
-            X_test_transformed = preprocessor.transform(X_test)
-            lg.info("..test set transformed successfully!")
+            lg.info("transforming (imputation + scaling) the feature store dataset..")
+            X_transformed = preprocessor.fit_transform(X)
+            lg.info("..transformed the feature store dataset successfully!")
 
             # Saving the Preprocessor
             BasicUtils.save_object(
@@ -126,16 +116,10 @@ class DataPreparation:
                 obj=preprocessor,
                 obj_desc="preprocessor")
 
-            ########################### Clustering of Data Instances ############################################
+            ################################# Cluster Data Instances #############################################
             cluster_train_data = ClusterDataInstances(
-                X=X_train_transformed, desc="training", data_prep_config=self.data_prep_config)
-            clusterer, X_train_clus = cluster_train_data.create_clusters()
-
-            # Cluster Test instances
-            lg.info("Clustering the test instances..")
-            y_kmeans_test = clusterer.predict(X_test_transformed)
-            X_test_clus = np.c_[X_test_transformed, y_kmeans_test]
-            lg.info("..got test instances clustererd successfully!")
+                X=X_transformed, desc="training", data_prep_config=self.data_prep_config)
+            clusterer, X_clus = cluster_train_data.create_clusters()
 
             # Save the Clusterer
             lg.info("saving the Clusterer..")
@@ -143,7 +127,7 @@ class DataPreparation:
                 file_path=self.data_prep_config.clusterer_path, obj=clusterer, obj_desc="KMeans Clusterer")
             lg.info("..said Clusterer saved successfully!")
 
-            ########################### Resampling of Training Data Instances ##################################
+            ################################ Resample Data Instances ############################################
             # fetch the SMOTE Resampler
             lg.info(
                 "Resampling the data instances as our target attribute is highly imbalanced..")
@@ -151,41 +135,29 @@ class DataPreparation:
             resampler = DataPreparation.get_resampler()
             lg.info("..resampler fetched succesfully!")
             lg.info(
-                f"Before Resampling, shape of the `training set`: {training_set.shape}")
+                f"Before Resampling, shape of the `feature store` dataset: {X_clus.shape}")
             lg.info('Resampling via SMOTETomek using sampling_strategy="auto"..')
-            # Resample the training instances (as they are heavily imbalanced)
-            X_train_res, y_train_res = resampler.fit_resample(
-                X_train_clus, y_train)
-            lg.info("resampling of training instances done successfully!")
+            # Resample the feature store instances (as they are heavily imbalanced)
+            X_res, y_res = resampler.fit_resample(X_clus, y)
+            lg.info("resampling of `feature store` instances done successfully!")
 
-            ######################### Configure Training and Test arrays #######################################
-            # Training Array
-            training_arr = np.c_[X_train_res, y_train_res]
+            ############################# Configure Feature Store array ########################################
+            wafers_arr = np.c_[X_res, y_res]
             lg.info(
-                f"After Resampling, shape of the `training set`: {training_arr.shape}")
-            # Test Array
-            test_arr = np.c_[X_test_clus, y_test]
+                f"After Resampling, shape of the `feature store` dataset: {wafers_arr.shape}")
 
-            ########################### Save Training and Test arrays ##########################################
-            # Saving the Training Array
+            ############################ Save the Feature Store array ##########################################
             BasicUtils.save_numpy_array(
-                file_path=self.data_prep_config.transformed_training_file_path,
-                arr=training_arr,
-                desc="training"
-            )
-            # Saving the Test Array
-            BasicUtils.save_numpy_array(
-                file_path=self.data_prep_config.transformed_test_file_path,
-                arr=test_arr,
-                desc="test"
+                file_path=self.data_prep_config.transformed_feature_store_file_path,
+                arr=wafers_arr,
+                desc="(transformed) feature store"
             )
 
             ########################## Prepare the Data Preparation Artifact ###################################
             data_prep_artifact = DataPreparationArtifact(
                 preprocessor_path=self.data_prep_config.preprocessor_path,
                 clusterer_path=self.data_prep_config.clusterer_path,
-                transformed_training_file_path=self.data_prep_config.transformed_training_file_path,
-                transformed_test_file_path=self.data_prep_config.transformed_test_file_path
+                transformed_feature_store_file_path=self.data_prep_config.transformed_feature_store_file_path
             )
             lg.info(f"Data Preparation Artifact: {data_prep_artifact}")
             lg.info("Data Preparation completed!")

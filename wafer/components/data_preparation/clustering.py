@@ -100,7 +100,7 @@ class ClusterDataInstances:
                             init='k-means++', random_state=42)
             y_kmeans = kmeans.fit_predict(self.X)
             lg.info(
-                f"..said data instances divived into {self.desc} clusters successfully!")
+                f"..said data instances divided into {ideal_clusters} clusters successfully!")
 
             return kmeans, np.c_[self.X, y_kmeans]
             ...

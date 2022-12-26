@@ -9,12 +9,19 @@ from wafer.components.data_preparation.data_preparation import DataPreparation
 
 @dataclass
 class TrainingPipeline:
+    """Shall be used for triggering the Training pipeline."""
     lg.info("Training Pipeline begins now..")
     lg.info(f"Entered the {os.path.basename(__file__)[:-3]}.TrainingPipeline")
 
     new_data: bool = False
 
     def begin(self):
+        """Commences the training pipeline starting from Data Validay=tion component followed by Data Ingestion, 
+        Data Preparation, Model Training, Model Evaluation and at last, Model Pushing.
+
+        Raises:
+            e: Raises exception should any sort of error pops up during the training pipeline flow execution.
+        """
         try:
             ######################### DATA VALIDATION ######################################
             data_validation = DataValidation()

@@ -129,7 +129,7 @@ class MongoDBOperations:
             lg.exception(e)
             raise e
         else:
-            lg.info("returning the database..")
+            lg.info("returning the extracted data as dataframe..")
             return df
 
 
