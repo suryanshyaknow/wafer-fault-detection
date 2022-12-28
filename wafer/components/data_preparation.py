@@ -8,7 +8,6 @@ from wafer.entities.artifact import DataIngestionArtifact, DataPreparationArtifa
 from sklearn.pipeline import Pipeline
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import RobustScaler
-from wafer.components.data_preparation.clustering import ClusterDataInstances
 from imblearn.combine import SMOTETomek
 from dataclasses import dataclass
 
@@ -81,25 +80,25 @@ class DataPreparation:
         try:
             lg.info(f"\n{'='*27} DATA PREPARATION {'='*40}")
 
-            ########################### Fetch the `Feature Store` dataset #######################################
-            lg.info("fetching the feature store dataset for preparation..")
-            wafers = pd.read_csv(
-                self.data_ingestion_artifact.feature_store_file_path)
+            ################################# Fetch the Training set ###########################################
+            lg.info("fetching the `wafers` training set for preparation..")
+            wafers_train = pd.read_csv(
+                self.data_ingestion_artifact.training_file_path)
             lg.info("..said dataset fetched successfully!")
 
             ################################ Drop Redundant Features ###########################################
             # fetch `Wafer` feature and features with "0 Standard Deviation" as in to drop them
             cols_to_drop = ["Wafer"]
             cols_with_zero_std = BasicUtils.get_columns_with_zero_std_dev(
-                df=wafers, desc="feature store")
+                df=wafers_train, desc="feature store")
             cols_to_drop = cols_to_drop + cols_with_zero_std
             # drop fetched features form training set
-            wafers = BasicUtils.drop_columns(
-                wafers, cols_to_drop=cols_to_drop, desc="feature store")
+            wafers_train = BasicUtils.drop_columns(
+                wafers_train, cols_to_drop=cols_to_drop, desc="training")
 
             ########################## Separate the Features and Labels out ####################################
             X, y = BasicUtils.get_features_and_labels(
-                df=wafers, target=[self.target], desc="feature store")
+                df=wafers_train, target=[self.target], desc="training")
 
             ######################## Transformation: Imputation + Scaling ######################################
             # fetch the transformer and fit to the training features
@@ -107,7 +106,7 @@ class DataPreparation:
             preprocessor = DataPreparation.get_preprocessor()
             lg.info("..preprocessor fetched successfully!")
             lg.info("transforming (imputation + scaling) the feature store dataset..")
-            X_transformed = preprocessor.fit_transform(X)
+            X_trans = preprocessor.fit_transform(X)
             lg.info("..transformed the feature store dataset successfully!")
 
             # Saving the Preprocessor
@@ -116,18 +115,7 @@ class DataPreparation:
                 obj=preprocessor,
                 obj_desc="preprocessor")
 
-            ################################# Cluster Data Instances #############################################
-            cluster_train_data = ClusterDataInstances(
-                X=X_transformed, desc="training", data_prep_config=self.data_prep_config)
-            clusterer, X_clus = cluster_train_data.create_clusters()
-
-            # Save the Clusterer
-            lg.info("saving the Clusterer..")
-            BasicUtils.save_object(
-                file_path=self.data_prep_config.clusterer_path, obj=clusterer, obj_desc="KMeans Clusterer")
-            lg.info("..said Clusterer saved successfully!")
-
-            ################################ Resample Data Instances ############################################
+            ############################# Resample Training Instances ###########################################
             # fetch the SMOTE Resampler
             lg.info(
                 "Resampling the data instances as our target attribute is highly imbalanced..")
@@ -135,30 +123,27 @@ class DataPreparation:
             resampler = DataPreparation.get_resampler()
             lg.info("..resampler fetched succesfully!")
             lg.info(
-                f"Before Resampling, shape of the `feature store` dataset: {X_clus.shape}")
+                f"Before Resampling, shape of the `training` dataset: {X_trans.shape}")
             lg.info('Resampling via SMOTETomek using sampling_strategy="auto"..')
             # Resample the feature store instances (as they are heavily imbalanced)
-            X_res, y_res = resampler.fit_resample(X_clus, y)
-            lg.info("resampling of `feature store` instances done successfully!")
+            X_res, y_res = resampler.fit_resample(X_trans, y)
+            lg.info("resampling of `training` instances done successfully!")
 
-            ############################# Configure Feature Store array ########################################
-            wafers_arr = np.c_[X_res, y_res]
+            ########################### Configure the Prepared Training Array ##################################
+            train_arr = np.c_[X_res, y_res]
             lg.info(
-                f"After Resampling, shape of the `feature store` dataset: {wafers_arr.shape}")
+                f"After Resampling, shape of the `training` dataset: {train_arr.shape}")
 
-            ############################ Save the Feature Store array ##########################################
+            ############################ Save the Prepared Training Array ######################################
             BasicUtils.save_numpy_array(
-                file_path=self.data_prep_config.transformed_feature_store_file_path,
-                arr=wafers_arr,
-                desc="(transformed) feature store"
-            )
+                file_path=self.data_prep_config.prepared_training_file_path,
+                arr=train_arr,
+                desc="prepared training")
 
             ########################## Prepare the Data Preparation Artifact ###################################
             data_prep_artifact = DataPreparationArtifact(
                 preprocessor_path=self.data_prep_config.preprocessor_path,
-                clusterer_path=self.data_prep_config.clusterer_path,
-                transformed_feature_store_file_path=self.data_prep_config.transformed_feature_store_file_path
-            )
+                prepared_training_file_path=self.data_prep_config.prepared_training_file_path)
             lg.info(f"Data Preparation Artifact: {data_prep_artifact}")
             lg.info("Data Preparation completed!")
 

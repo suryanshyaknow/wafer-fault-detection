@@ -12,11 +12,12 @@ from dataclasses import dataclass
 
 @dataclass
 class DataIngestion:
-    """Shall be used for ingesting the validated data from `Good Raw Data` dir into MongoDB and even extract and readies the 
-    consequent feature store file once the ingestion's been done.
+    """Shall be used for ingesting the validated data from `Good Raw Data` dir into MongoDB and even 
+    extract and readies the consequent feature store file once the ingestion's been done.
 
     Args:
-        new_data (bool): Whether there's any new data for dumping into the desired realational dB. Defaults to False.
+        new_data (bool): Whether there's any new data for dumping into the desired realational dB. 
+        Defaults to False.
     """
     lg.info(
         f'Entered the "{os.path.basename(__file__)[:-3]}.DataIngestion" class')
@@ -30,7 +31,8 @@ class DataIngestion:
         """Initiates the Data Ingestion stage of the training pipeline.
 
         Raises:
-            e: Raises exception should any pops up while ingestion of data or extraction of same after ingestion.
+            e: Raises exception should any pops up while ingestion of data or extraction of same 
+            after ingestion.
 
         Returns:
             DataIngestionArtifact: Contains configurations of all relevant artifacts that shall be made during 
@@ -49,18 +51,21 @@ class DataIngestion:
 
             if self.new_data:  # dump data to MongoDB only if there's new data
 
-                ####################### Fetch GoodRawData and Dump into MongoDB ####################################
+                ####################### Fetch GoodRawData and Dump into MongoDB ################################
                 lg.info(
                     "fetching data from `GoodRawData` dir and dumping it into the database..")
                 good_data_dir = self.data_validation_artifact.good_data_dir
 
                 for csv_file in os.listdir(good_data_dir):
-                    # read dataframe with na_values as "null"
+
+                    # Read dataframe with na_values as "null"
                     df = pd.read_csv(os.path.join(
                         good_data_dir, csv_file), na_values="null")
-                    # rename the unnamed column to "Wafer"
+
+                    # Rename the unnamed column to "Wafer"
                     df.rename(columns={"Unnamed: 0": "Wafer"}, inplace=True)
-                    # convert the df into "dumpable into MongoDB" format --json
+
+                    # Convert the df into "dumpable into MongoDB" format --json
                     all_records = list(json.loads(df.T.to_json()).values())
                     lg.info(f"\"{csv_file}\" data fetched successfully!")
 
@@ -77,17 +82,45 @@ class DataIngestion:
             lg.info(
                 f"Shape of `feature store file`: {feature_store_file.shape}")
             lg.info("saving the `feature store file`..")
-            # make sure the dir for saving `Feature Store file` does exist
+
+            # Making sure the dir for saving `Feature Store file` does exist
             feature_store_dir = os.path.dirname(
                 self.data_ingestion_config.feature_store_file_path)
             os.makedirs(feature_store_dir, exist_ok=True)
+
+            # Saving the `feature Store` dataset
             feature_store_file.to_csv(
                 self.data_ingestion_config.feature_store_file_path, index=None)
             lg.info("..prepared `feature store file` successfully!")
 
+            ########################## Training-Test Split #####################################################
+            lg.info(
+                'splitting the `feature store data` into training and test subsets..')
+            training_set, test_set = train_test_split(
+                feature_store_file, test_size=self.data_ingestion_config.test_size, random_state=self.data_ingestion_config.random_state)
+            lg.info("..data split into test and training subsets successfully!")
+
+            # Making sure the test and training dirs do exist
+            test_dir = os.path.dirname(
+                self.data_ingestion_config.test_file_path)
+            training_dir = os.path.dirname(
+                self.data_ingestion_config.training_file_path)
+            os.makedirs(test_dir, exist_ok=True)
+            os.makedirs(training_dir, exist_ok=True)
+
+            # Saving the test and train set to their respective dirs
+            lg.info("saving the test and training subsets to their respective dirs..")
+            test_set.to_csv(
+                path_or_buf=self.data_ingestion_config.test_file_path, index=None)
+            training_set.to_csv(
+                path_or_buf=self.data_ingestion_config.training_file_path, index=None)
+            lg.info("..test and training subsets saved succesfully!")
+
             ########################### Prepare the Data Ingestion Artifact ####################################
             data_ingestion_artifact = DataIngestionArtifact(
-                feature_store_file_path=self.data_ingestion_config.feature_store_file_path)
+                feature_store_file_path=self.data_ingestion_config.feature_store_file_path,
+                training_file_path=self.data_ingestion_config.training_file_path,
+                test_file_path=self.data_ingestion_config.test_file_path)
             lg.info(f"Data Ingestion Artifact: {data_ingestion_artifact}")
             lg.info("DATA INGESTION completed!")
 

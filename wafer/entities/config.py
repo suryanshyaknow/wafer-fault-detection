@@ -8,9 +8,9 @@ RAW_DATA_DIR = "training_batch_files"
 TRAINING_SCHEMA = "schema_training.json"
 PREDICTION_SCHEMA = "schema_prediction.json"
 FEATURE_STORE_FILE = "wafers.csv"
+TRAINING_FILE = "training.csv"
+TEST_FILE = "test.csv"
 PREPROCESSOR = "preprocessor.pkl"
-CLUSTERER_PATH = "clusterer.pkl"
-ELBOW_PLOT_PATH = "kmeans_elbow.png"
 
 
 @dataclass
@@ -74,6 +74,14 @@ class DataIngestionConfig:
             # Feature Store Dataset dir
             self.feature_store_file_path = os.path.join(
                 self.data_ingestion_dir, "feature_store", FEATURE_STORE_FILE)
+            # Training file path
+            self.training_file_path = os.path.join(
+                self.data_ingestion_dir, "datasets", TRAINING_FILE)
+            # Test file path
+            self.test_file_path = os.path.join(
+                self.data_ingestion_dir, "datasets", TEST_FILE)
+            self.test_size = .20
+            self.random_state = 42
             ...
         except Exception as e:
             lg.exception(e)
@@ -92,15 +100,9 @@ class DataPreparationConfig:
             # Preprocessor path
             self.preprocessor_path = os.path.join(
                 self.data_preparation_dir, "preprocessor", PREPROCESSOR)
-            # Clusterer path
-            self.clusterer_path = os.path.join(
-                self.data_preparation_dir, "clusterer", CLUSTERER_PATH)
-            # Elbow Plot path
-            self.elbow_plot_path = os.path.join(
-                self.data_preparation_dir, "plots", ELBOW_PLOT_PATH)
-            # Transformed Feature Store dataset path
-            self.transformed_feature_store_file_path = os.path.join(
-                self.data_preparation_dir, "preprocessed", FEATURE_STORE_FILE.replace(".csv", ".npz"))
+            # Prepared Training file path
+            self.prepared_training_file_path = os.path.join(
+                self.data_preparation_dir, "preprocessed", TRAINING_FILE.replace(".csv", ".npz"))
             ...
         except Exception as e:
             lg.exception(e)
@@ -111,19 +113,13 @@ class ModelTrainingConfig:
     def __init__(self):
         try:
             training_artifacts_config = TrainingArtifactsConfig()
-            
+
             # Model Training's artifacts dir
             self.model_training_dir = os.path.join(
-                training_artifacts_config, "model_training")
+                training_artifacts_config.artifacts_dir, "model_training")
 
-            self.test_size = .20
-            self.random_state = 42
-
-            # Cluster based Models dir
-            self.cluster_based_models_dir = os.path.join(
-                self.model_training_dir, "cluster_based_models")
-
-            self.expected_score = .85
+            self.expected_accuracy = .90
+            self.expected_auc = 0.85
             self.overfit_thresh = .1
             ...
         except Exception as e:
