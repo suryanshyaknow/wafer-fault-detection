@@ -4,7 +4,6 @@ import joblib
 from wafer.logger import lg
 import pandas as pd
 import numpy as np
-import yaml
 from typing import Dict, List, Tuple
 
 
@@ -129,72 +128,6 @@ class BasicUtils:
             raise e
 
     @classmethod
-    def save_cluster_based_model(cls, model_dir: str, model: object, model_name: str, cluster: int) -> None:
-        """Saves the desired cluster based model in the `file_dir` as `file_name`.
-
-        Args:
-            model_dir (str): Location where the desired model is to be stored.
-            model (object): Model object that is to be stored.
-            model_name (str): Name of the model to be stored.
-            cluster (int): Cluster's number for which model's gotta be stored.
-
-        Raises:
-            e: Throws relevant exception if any error pops while saving the desired object.
-        """
-        try:
-            # Make sure the Model dir does exist
-            os.makedirs(model_dir, exist_ok=True)
-            # said Model's file path
-            file_name = f'{cluster}__{model_name}.pkl'
-            file_path = os.path.join(model_dir, file_name)
-
-            # Saving the model
-            lg.info(
-                f'Saving the "{model_name}" for "Cluster {cluster}" at "{model_dir}"..')
-            joblib.dump(model, open(file_path, 'wb'))
-            ...
-        except Exception as e:
-            lg.exception(e)
-            raise e
-        else:
-            lg.info(f'.."{model_name}" saved as "{file_name}" successfully!')
-
-    @classmethod
-    def load_cluster_based_model(cls, model_dir: str, cluster: int) -> object:
-        """Loads the desired cluster based model from the `file_dir`.
-
-        Args:
-            model_dir (str): Location from where the desired model is to be loaded.
-            cluster (int): Cluster's number for which model's gotta be stored.
-
-        Raises:
-            e: Throws relevant exception if any error pops while saving the desired object.
-        """
-        try:
-            models = os.listdir(model_dir)
-            for model in models:
-                if model.startswith(str(cluster)):
-                    desired_model = model
-
-            # desired Model's path
-            file_path = os.path.join(model_dir, desired_model)
-            # Raise Exception if the file path doesn't even exists
-            if os.path.exists(file_path):
-                lg.exception("Error! The said path does't even exist.")
-                raise Exception("Error! The said path does't even exist.")
-            # Loading the Model
-            lg.info(
-                f'loading the desired model for "Cluster {cluster}" from "{file_path}"..')
-            joblib.load(filename=open(file_path, 'rb'))
-            ...
-        except Exception as e:
-            lg.exception(e)
-            raise e
-        else:
-            lg.info(
-                f'..loaded the said model for "Cluster {cluster}" with success!')
-
-    @classmethod
     def save_object(cls, file_path: str, obj: object, obj_desc: str) -> None:
         """Saves the desired object at the said desired location.
 
@@ -235,18 +168,71 @@ class BasicUtils:
             lg.info(f'loading the "{obj_desc}"..')
             if not os.path.exists(file_path):
                 lg.error(
-                    'Uh oh! Looks like the said file path or the object doesn\'t even exist!')
+                    'Uh oh! Looks like the given file path or the object doesn\'t even exist!')
                 raise Exception(
-                    'Uh oh! Looks like the said file path or the object doesn\'t even exist!')
+                    'Uh oh! Looks like the given file path or the object doesn\'t even exist!')
 
-            else:
-                lg.info(f'"{obj_desc}" loaded successfully!')
-                return joblib.load(open(file_path, 'rb'))
+            lg.info(f'"{obj_desc}" loaded successfully!')
+            return joblib.load(open(file_path, 'rb'))
             ...
         except Exception as e:
             lg.exception(e)
             raise e
 
+    @classmethod
+    def save_dataframe_as_csv(cls, file_path: str, df: pd.DataFrame, desc: str):
+        """Saves the given dataframe as `csv` file at the desired `file_path` location.
+
+        Args:
+            file_path (str): Location where the dataframe is to be stored.
+            df (pd.DataFrame): Dataframe which is to be saved.
+            desc (str): Description of the given dataframe.
+
+        Raises:
+            e: Throws relevant exception if any error pops up while saving the given dataframe as csv file.
+        """
+        try:
+            lg.info(f'Saving the "{desc} dataset" at "{file_path}"..')
+            # Making sure the dir to store the given dataframe does exist
+            dir = os.path.dirname(file_path)
+            os.makedirs(dir, exist_ok=True)
+
+            df.to_csv(path_or_buf=file_path, index=None)
+            ...
+        except Exception as e:
+            lg.exception(e)
+            raise e
+        else:
+            lg.info(f'"{desc} dataset" saved successfully at "{file_path}"!')
+
+    @classmethod
+    def load_csv_as_dataframe(cls, file_path: str, desc: str):
+        """Loads the desired csv file as pandas dataframe from the given `file_path` location.
+
+        Args:
+            file_path (str): Location from where the csv file is to be loaded.
+            desc (str): Description of the csv file.
+
+        Raises:
+            e: Throws relevant exception if any error pops up while loading or returning the desired csv file.
+        """
+        try:
+            lg.info(f'Loading the "{desc} array" from "{file_path}"..')
+
+            if not os.path.exists(file_path):
+                lg.error(
+                    'Uh Oh! Looks like the given file path doesn\'t even exist!')
+                raise Exception(
+                    'Uh Oh! Looks like the given file path doesn\'t even exist!')
+            
+            lg.info(f'"{desc} dataset" loaded successfully!')
+            return pd.read_csv(file_path)
+            ...
+        except Exception as e:
+            lg.exception(e)
+            raise e
+
+            
     @classmethod
     def save_numpy_array(cls, file_path: str, arr: np.array, desc: str):
         """Saves the numpy array at the desired `file_path` location.
@@ -260,21 +246,22 @@ class BasicUtils:
             e: Throws relevant exception if any error pops up while saving the given numpy array.
         """
         try:
-            lg.info(f'Saving the "{desc} Array" at "{file_path}"..')
+            lg.info(f'Saving the "{desc} array" at "{file_path}"..')
             # Making sure the dir do exist
             dir = os.path.dirname(file_path)
             os.makedirs(dir, exist_ok=True)
             with open(file_path, "wb") as f:
                 np.save(f, arr)
-            lg.info(f'"{desc} array" saved successfully!')
             ...
         except Exception as e:
             lg.exception(e)
             raise e
-
+        else:
+            lg.info(f'"{desc} array" saved successfully!')
+    
     @classmethod
     def load_numpy_array(cls, file_path: str, desc: str):
-        """Loads the desried numpy array from the desired `file_path` location.
+        """Loads the desired numpy array from the desired `file_path` location.
 
         Args:
             file_path (str): Location from where the numpy array is to be fetched.
@@ -298,28 +285,3 @@ class BasicUtils:
         except Exception as e:
             lg.exception(e)
             raise e
-
-    @classmethod
-    def write_yaml_file(cls, file_path: str, data: dict, desc: str):
-        """Dumps the desired data into `yaml` file at the said location.
-
-        Raises:
-            e: Throws relevant exception if any sorta error pops up.
-
-        Args:
-            file_path (str): Location where yaml file is to be created.
-            data (dict): Data that is to be dumped into yaml file.
-            desc (str): Description of the file.
-        """
-        try:
-            lg.info(f"readying the `{desc}` yaml file..")
-            file_dir = os.path.dirname(file_path)
-            os.makedirs(file_dir, exist_ok=True)
-            with open(file_path, "w") as f:
-                yaml.dump(data, f)
-            ...
-        except Exception as e:
-            lg.exception(e)
-            raise e
-        else:
-            lg.info(f'"{desc}" is ready at "{file_path}"!')
