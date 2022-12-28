@@ -82,8 +82,8 @@ class DataPreparation:
 
             ################################# Fetch the Training set ###########################################
             lg.info("fetching the `wafers` training set for preparation..")
-            wafers_train = pd.read_csv(
-                self.data_ingestion_artifact.training_file_path)
+            wafers_train = BasicUtils.load_csv_as_dataframe(
+                self.data_ingestion_artifact.training_file_path, desc="training")
             lg.info("..said dataset fetched successfully!")
 
             ################################ Drop Redundant Features ###########################################
@@ -92,7 +92,7 @@ class DataPreparation:
             cols_with_zero_std = BasicUtils.get_columns_with_zero_std_dev(
                 df=wafers_train, desc="feature store")
             cols_to_drop = cols_to_drop + cols_with_zero_std
-            # drop fetched features form training set
+            # drop these Redundant features
             wafers_train = BasicUtils.drop_columns(
                 wafers_train, cols_to_drop=cols_to_drop, desc="training")
 

@@ -6,6 +6,7 @@ from wafer.CONFIG import DatabaseConfig
 from wafer.entities.config import DataIngestionConfig
 from wafer.entities.artifact import DataIngestionArtifact, DataValidationArtifact
 from wafer.utils.db_operations import MongoDBOperations
+from wafer.utils.file_operations import BasicUtils
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 
@@ -100,20 +101,12 @@ class DataIngestion:
                 feature_store_file, test_size=self.data_ingestion_config.test_size, random_state=self.data_ingestion_config.random_state)
             lg.info("..data split into test and training subsets successfully!")
 
-            # Making sure the test and training dirs do exist
-            test_dir = os.path.dirname(
-                self.data_ingestion_config.test_file_path)
-            training_dir = os.path.dirname(
-                self.data_ingestion_config.training_file_path)
-            os.makedirs(test_dir, exist_ok=True)
-            os.makedirs(training_dir, exist_ok=True)
-
-            # Saving the test and train set to their respective dirs
+            # Saving the Test and Training sets to their respective dirs
             lg.info("saving the test and training subsets to their respective dirs..")
-            test_set.to_csv(
-                path_or_buf=self.data_ingestion_config.test_file_path, index=None)
-            training_set.to_csv(
-                path_or_buf=self.data_ingestion_config.training_file_path, index=None)
+            BasicUtils.save_dataframe_as_csv(
+                self.data_ingestion_config.test_file_path, df=test_set, desc="test")
+            BasicUtils.save_dataframe_as_csv(
+                self.data_ingestion_config.training_file_path, df=training_set, desc="training")
             lg.info("..test and training subsets saved succesfully!")
 
             ########################### Prepare the Data Ingestion Artifact ####################################
