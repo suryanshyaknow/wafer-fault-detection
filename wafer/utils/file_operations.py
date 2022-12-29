@@ -85,7 +85,7 @@ class BasicUtils:
             pd.DataFrame: Consequent dataframe after its desired columns have been dropped.
         """
         try:
-            lg.info(f"Column to be dropped: {cols_to_drop}")
+            lg.info(f"\nColumns to be dropped: \n{cols_to_drop}")
             lg.info(f"dropping above columns from the \"{desc}\" dataset..")
             df_new = df.drop(columns=cols_to_drop, axis=1)
             lg.info("..said columns dropped successfully!")
@@ -96,11 +96,41 @@ class BasicUtils:
             raise e
 
     @classmethod
+    def get_columns_with_certain_missing_thresh(cls, df: pd.DataFrame, desc: str, missing_thresh=.7) -> List:
+        """Returns columns names having missing values more than or equal to a certain `missing_thresh`.
+
+        Args:
+            df (pd.DataFrame): Dataset from which said columns names are to be fetched and returned.
+            missing_thresh (float, optional): Threshold for missing values. Defaults to .7.
+            desc (str): Description of the said dataframe.
+
+        Raises:
+            e: Throws relevant exception should any kinda error pops up while fetching and returing 
+            said columns names.
+
+        Returns:
+            List: List of columns names having missing ratio more than `missing_thresh`.
+        """
+        try:
+            cols_missing_ratios = df.isna().sum().div(df.shape[0])
+            lg.info(
+                f'fetching column names having missing values more than a {missing_thresh*100}% from "{desc}" dataset..')
+            cols_to_drop = list(
+                cols_missing_ratios[cols_missing_ratios > missing_thresh].index)
+            lg.info("..said columns fetched successfully!")
+            lg.info(f"\n..Columns with missing ratio more than {missing_thresh}: \n{cols_to_drop}")
+            return cols_to_drop
+            ...
+        except Exception as e:
+            lg.exception(e)
+            raise e
+
+    @classmethod
     def get_columns_with_zero_std_dev(cls, df: pd.DataFrame, desc: str) -> List:
         """Returns a list of column names that have zero standard deviation, from the provided dataframe.
 
         Args:
-            df (pd.DataFrame): Dataset from ehich said column names gotta be fetched.
+            df (pd.DataFrame): Dataset from which said column names gotta be fetched.
             desc (str): Description of the said dataframe.
 
         Raises:
@@ -119,7 +149,7 @@ class BasicUtils:
                 if df[col].std(skipna=True) == 0:
                     cols_with_zero_std_dev.append(col)
             lg.info(f"..said column names fetched successfully!")
-            lg.info(f"..said columns: {cols_with_zero_std_dev}")
+            lg.info(f"\n..Columns with 0 Standard Deviation: \n{cols_with_zero_std_dev}")
 
             return cols_with_zero_std_dev
             ...
@@ -224,7 +254,7 @@ class BasicUtils:
                     'Uh Oh! Looks like the given file path doesn\'t even exist!')
                 raise Exception(
                     'Uh Oh! Looks like the given file path doesn\'t even exist!')
-            
+
             lg.info(f'"{desc} dataset" loaded successfully!')
             return pd.read_csv(file_path)
             ...
@@ -232,7 +262,6 @@ class BasicUtils:
             lg.exception(e)
             raise e
 
-            
     @classmethod
     def save_numpy_array(cls, file_path: str, arr: np.array, desc: str):
         """Saves the numpy array at the desired `file_path` location.
@@ -258,7 +287,7 @@ class BasicUtils:
             raise e
         else:
             lg.info(f'"{desc} array" saved successfully!')
-    
+
     @classmethod
     def load_numpy_array(cls, file_path: str, desc: str):
         """Loads the desired numpy array from the desired `file_path` location.
